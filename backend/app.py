@@ -7,8 +7,10 @@ import sys
 import io
 import contextlib
 import traceback
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)  # Enable CORS for all routes
 
 # Configure MongoDB Atlas connection
 client = MongoClient(MONGODB_URI)
