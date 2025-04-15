@@ -3,6 +3,10 @@ from pymongo import MongoClient
 from werkzeug.utils import secure_filename
 import gridfs
 from config import MONGODB_URI
+import sys
+import io
+import contextlib
+import traceback
 
 app = Flask(__name__)
 
@@ -31,6 +35,28 @@ def upload():
         'message': 'Images uploaded successfully',
         'file_ids': saved_files
     }), 200
+
+@app.route('/execute', methods=['POST'])
+def execute_code():
+    data = request.get_json()
+    if not data or 'code' not in data:
+        return jsonify({'error': 'No code provided'}), 400
+
+    code = data['code']
+
+    # Redirect stdout to capture print statements
+    stdout = io.StringIO()
+    try:
+        with contextlib.redirect_stdout(stdout):
+            # Use exec in a restricted namespace
+            exec_globals = {}
+            exec_locals = {}
+            exec(code, exec_globals, exec_locals)
+        output = stdout.getvalue()
+        return jsonify({'output': output}), 200
+    except Exception:
+        error_msg = traceback.format_exc()
+        return jsonify({'error': error_msg}), 400
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
